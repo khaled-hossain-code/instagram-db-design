@@ -1,0 +1,120 @@
+// prisma/schema.prisma
+
+model User {
+  id         Int      @id @default(autoincrement())
+  created_at DateTime @default(now()) @updatedAt @map("created_at")
+  updated_at DateTime @default(now()) @updatedAt @map("updated_at")
+  username   String   @db.VarChar(30)
+  bio        String?  @db.VarChar(400)
+  avatar     String?  @db.VarChar(200)
+  phone      String?  @db.VarChar(25)
+  email      String?  @db.VarChar(40)
+  password   String?  @db.VarChar(50)
+  status     String?  @db.VarChar(15)
+
+  posts              Post[]
+  comments           Comment[]
+  likes              Like[]
+  photo_tags         PhotoTag[]
+  followers_leader   Follower[]   @relation("leader")
+  followers_follower Follower[]   @relation("follower")
+  CaptionTag         CaptionTag[]
+}
+
+model Post {
+  id         Int      @id @default(autoincrement())
+  created_at DateTime @default(now()) @updatedAt @map("created_at")
+  updated_at DateTime @default(now()) @updatedAt @map("updated_at")
+  url        String   @db.VarChar(200)
+  caption    String?  @db.VarChar(240)
+  lat        Float?
+  lng        Float?
+  user_id    Int      @db.Integer
+  user       User     @relation(fields: [user_id], references: [id])
+
+  comments       Comment[]
+  likes          Like[]
+  photo_tags     PhotoTag[]
+  caption_tags   CaptionTag[]
+  hashtags_posts HashtagsPost[]
+}
+
+model Comment {
+  id         Int      @id @default(autoincrement())
+  created_at DateTime @default(now()) @updatedAt @map("created_at")
+  updated_at DateTime @default(now()) @updatedAt @map("updated_at")
+  contents   String   @db.VarChar(240)
+  user_id    Int      @db.Integer
+  post_id    Int      @db.Integer
+  user       User     @relation(fields: [user_id], references: [id])
+  post       Post     @relation(fields: [post_id], references: [id])
+
+  likes Like[]
+}
+
+model Like {
+  id         Int      @id @default(autoincrement())
+  created_at DateTime @default(now()) @updatedAt @map("created_at")
+  user_id    Int      @db.Integer
+  post_id    Int?
+  comment_id Int?
+  user       User     @relation(fields: [user_id], references: [id])
+
+  post    Post?    @relation(fields: [post_id], references: [id])
+  comment Comment? @relation(fields: [comment_id], references: [id])
+
+  @@unique([user_id, post_id, comment_id])
+}
+
+model PhotoTag {
+  id         Int      @id @default(autoincrement())
+  created_at DateTime @default(now()) @updatedAt @map("created_at")
+  updated_at DateTime @default(now()) @updatedAt @map("updated_at")
+  post_id    Int      @db.Integer
+  user_id    Int      @db.Integer
+  x          Int
+  y          Int
+  user       User     @relation(fields: [user_id], references: [id])
+  post       Post     @relation(fields: [post_id], references: [id])
+
+  @@unique([user_id, post_id])
+}
+
+model CaptionTag {
+  id         Int      @id @default(autoincrement())
+  created_at DateTime @default(now()) @updatedAt @map("created_at")
+  post_id    Int      @db.Integer
+  user_id    Int      @db.Integer
+  user       User     @relation(fields: [user_id], references: [id])
+  post       Post     @relation(fields: [post_id], references: [id])
+
+  @@unique([user_id, post_id])
+}
+
+model Hashtag {
+  id         Int            @id @default(autoincrement())
+  created_at DateTime       @default(now()) @updatedAt @map("created_at")
+  title      String         @unique @db.VarChar(20)
+  posts      HashtagsPost[]
+}
+
+model HashtagsPost {
+  id         Int     @id @default(autoincrement())
+  hashtag_id Int     @db.Integer
+  post_id    Int     @db.Integer
+  hashtag    Hashtag @relation(fields: [hashtag_id], references: [id])
+  post       Post    @relation(fields: [post_id], references: [id])
+
+  @@unique([hashtag_id, post_id])
+}
+
+model Follower {
+  id          Int      @id @default(autoincrement())
+  created_at  DateTime @default(now()) @updatedAt @map("created_at")
+  leader_id   Int      @db.Integer
+  follower_id Int      @db.Integer
+  leader      User     @relation("leader", fields: [leader_id], references: [id])
+  follower    User     @relation("follower", fields: [follower_id], references: [id])
+
+  @@unique([leader_id, follower_id])
+}
